@@ -1,0 +1,198 @@
+name: CLI Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+
+concurrency:
+  group: cli-release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  meta:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: meta
+        shell: bash
+        run: |
+          VERSION="$(tr -d '[:space:]' < VERSION)"
+          [[ "${GITHUB_REF_NAME#v}" == "$VERSION" ]]
+          git fetch origin main --depth=1
+          git branch -r --contains "$GITHUB_SHA" | grep -q "origin/main"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      - run: python3 scripts/version_sync.py check
+
+  test:
+    runs-on: ubuntu-latest
+    needs: meta
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            . -> target
+      - run: python3 scripts/version_sync.py check
+      - run: cargo test --locked
+
+  build:
+    needs: [meta, test]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            archive: tar.gz
+          - os: macos-13
+            target: x86_64-apple-darwin
+            archive: tar.gz
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            archive: tar.gz
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            archive: zip
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            . -> target
+      - run: python3 scripts/version_sync.py check
+      - run: cargo build --release --locked --target ${{ matrix.target }}
+      - name: Package Artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          BIN="lukuid-cli"
+          BINARY_PATH="target/${{ matrix.target }}/release/$BIN"
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            BIN="lukuid-cli.exe"
+            BINARY_PATH="target/${{ matrix.target }}/release/$BIN"
+            cp "$BINARY_PATH" "dist/$BIN"
+            powershell -Command "Compress-Archive -Path dist/$BIN -DestinationPath dist/lukuid-cli-${{ needs.meta.outputs.version }}-${{ matrix.target }}.zip"
+          else
+            cp "$BINARY_PATH" "dist/$BIN"
+            tar -C dist -czf "dist/lukuid-cli-${{ needs.meta.outputs.version }}-${{ matrix.target }}.tar.gz" "$BIN"
+          fi
+          if command -v sha256sum >/dev/null 2>&1; then
+            sha256sum dist/lukuid-cli-${{ needs.meta.outputs.version }}-${{ matrix.target }}.${{ matrix.archive }} > dist/lukuid-cli-${{ needs.meta.outputs.version }}-${{ matrix.target }}.${{ matrix.archive }}.sha256
+          else
+            shasum -a 256 dist/lukuid-cli-${{ needs.meta.outputs.version }}-${{ matrix.target }}.${{ matrix.archive }} > dist/lukuid-cli-${{ needs.meta.outputs.version }}-${{ matrix.target }}.${{ matrix.archive }}.sha256
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cli-${{ matrix.target }}
+          path: dist/*
+
+  publish-crate:
+    runs-on: ubuntu-latest
+    needs: [meta, build]
+    environment: release
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            . -> target
+      - run: python3 scripts/version_sync.py check
+      - name: Authenticate crates.io Trusted Publishing
+        if: vars.CRATES_IO_TRUSTED_PUBLISHING == 'true'
+        id: auth
+        uses: rust-lang/crates-io-auth-action@v1
+      - run: cargo publish --locked
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token != '' && steps.auth.outputs.token || secrets.CARGO_REGISTRY_TOKEN }}
+
+  github-release:
+    runs-on: ubuntu-latest
+    needs: [meta, build]
+    environment: release
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+      - name: Create Release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="v${{ needs.meta.outputs.version }}"
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "$TAG" --notes "CLI release $TAG"
+          find release-assets -type f -print0 | xargs -0 gh release upload "$TAG" --clobber
+
+  homebrew:
+    runs-on: ubuntu-latest
+    needs: [meta, build, github-release]
+    environment: release
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+      - name: Render Homebrew Formula
+        shell: bash
+        run: |
+          set -euo pipefail
+          export VERSION="${{ needs.meta.outputs.version }}"
+          export ARM_SHA="$(cut -d' ' -f1 release-assets/cli-aarch64-apple-darwin/lukuid-cli-${VERSION}-aarch64-apple-darwin.tar.gz.sha256)"
+          export X64_SHA="$(cut -d' ' -f1 release-assets/cli-x86_64-apple-darwin/lukuid-cli-${VERSION}-x86_64-apple-darwin.tar.gz.sha256)"
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+
+          template = Path("scripts/brew-formula.rb").read_text(encoding="utf-8")
+          rendered = (
+              template
+              .replace("__VERSION__", os.environ["VERSION"])
+              .replace("__MACOS_ARM64_SHA__", os.environ["ARM_SHA"])
+              .replace("__MACOS_X64_SHA__", os.environ["X64_SHA"])
+          )
+          Path("lukuid-cli.rb").write_text(rendered, encoding="utf-8")
+          PY
+      - name: Upload Homebrew Formula Asset
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release upload "v${{ needs.meta.outputs.version }}" lukuid-cli.rb --clobber
+      - name: Publish Homebrew Tap
+        if: vars.HOMEBREW_TAP_REPOSITORY != ''
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.HOMEBREW_TAP_REPOSITORY }}
+          path: tap
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+      - name: Update Homebrew Tap Formula
+        if: vars.HOMEBREW_TAP_REPOSITORY != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p tap/Formula
+          cp lukuid-cli.rb tap/Formula/lukuid-cli.rb
+          git -C tap config user.name "github-actions[bot]"
+          git -C tap config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C tap add Formula/lukuid-cli.rb
+          git -C tap diff --cached --quiet && exit 0
+          git -C tap commit -m "Update lukuid-cli to v${{ needs.meta.outputs.version }}"
+          git -C tap push

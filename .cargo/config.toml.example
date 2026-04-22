@@ -1,0 +1,2 @@
+[patch."https://github.com/lukuid/sdk.git"]
+lukuid-sdk = { path = "../../sdk/src/rust/lukuid-sdk" }
