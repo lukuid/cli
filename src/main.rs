@@ -22,6 +22,7 @@ fn main() {
             path,
             allow_untrusted_roots,
             skip_certificate_temporal_checks,
+            require_continuity,
             trusted_external_fingerprint,
             json,
         } => {
@@ -29,6 +30,7 @@ fn main() {
                 &path,
                 allow_untrusted_roots,
                 skip_certificate_temporal_checks,
+                require_continuity,
                 trusted_external_fingerprint,
                 json,
             )

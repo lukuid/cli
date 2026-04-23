@@ -9,6 +9,7 @@ pub fn run_verify(
     path: &Path,
     allow_untrusted_roots: bool,
     skip_certificate_temporal_checks: bool,
+    require_continuity: bool,
     trusted_external_fingerprints: Vec<String>,
     json_mode: bool,
 ) -> Result<i32> {
@@ -16,6 +17,7 @@ pub fn run_verify(
     let options = LukuVerifyOptions {
         allow_untrusted_roots,
         skip_certificate_temporal_checks,
+        require_continuity,
         trusted_external_fingerprints,
         ..Default::default()
     };

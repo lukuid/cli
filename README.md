@@ -91,6 +91,10 @@ Command:
 cargo run -- info path/to/evidence.luku
 ```
 
+Options:
+
+- `--json`: Emit machine-readable JSON.
+
 Human-readable output:
 
 - Archive path
@@ -168,6 +172,14 @@ Overriding trust profile (for development certificates):
 LUKUID_TRUST_PROFILE=dev cargo run -- verify path/to/evidence.luku
 ```
 
+Options:
+
+- `--allow-untrusted-roots`: Allow records without trusted roots. Useful for local test exports or incomplete chains.
+- `--skip-certificate-temporal-checks`: Skip certificate time-bound checks. Useful when testing fixtures that do not have realistic issuance windows.
+- `--require-continuity`: Fail if any batch of records were separated because of a gap, defined by policy in manifest of .luku file (if set).
+- `--trusted-external-fingerprint <FINGERPRINT>`: Trusted root fingerprints for external identity verification. Can be provided multiple times.
+- `--json`: Emit machine-readable JSON.
+
 - Emits SDK verifier diagnostics to `stderr` with per-block and per-record context.
 - Useful when a failing archive produces repeated issue codes and you need to see which record index, counter, timestamp, or attestation step caused each failure.
 
@@ -203,17 +215,6 @@ cargo run -- verify path/to/evidence.luku --json
   - `issues`
   - `text`
 
-Fixture-friendly verification options:
-
-```bash
-cargo run -- verify path/to/evidence.luku \
-  --allow-untrusted-roots \
-  --skip-certificate-temporal-checks
-```
-
-- `--allow-untrusted-roots` is useful for local test exports or incomplete chains.
-- `--skip-certificate-temporal-checks` is useful when testing fixtures that do not have realistic issuance windows.
-
 Exit codes:
 
 - `0`: archive opened and no critical verification issues were found.
@@ -227,6 +228,21 @@ Purpose:
 - Inspect archive structure incrementally.
 - Browse by block first, then drill into a specific record.
 - Review individual record JSON in a terminal without opening the full desktop viewer.
+
+Command:
+
+```bash
+cargo run -- browse path/to/evidence.luku
+```
+
+Options:
+
+- `--block <INDEX>`: Select a block by zero-based block index.
+- `--record <INDEX>`: Select a record by zero-based index within the chosen block (requires `--block`).
+- `--show-payload`: Include full payloads and nested objects in record detail output.
+- `--json`: Emit machine-readable JSON.
+
+### Examples
 
 List all blocks:
 
@@ -267,10 +283,6 @@ Inspect a specific record:
 ```bash
 cargo run -- browse path/to/evidence.luku --block 0 --record 2 --show-payload
 ```
-
-- `--record` requires `--block`.
-- Without `--show-payload`, the CLI trims heavy nested fields and shows summary-safe output.
-- With `--show-payload`, the CLI prints the full record JSON.
 
 JSON output:
 

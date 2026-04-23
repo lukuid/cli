@@ -1129,8 +1129,8 @@ dependencies = [
 
 [[package]]
 name = "lukuid-sdk"
-version = "1.0.0"
-source = "git+https://github.com/lukuid/sdk.git#ba835cea9232fad841348bd15aab80515d46544c"
+version = "1.0.1"
+source = "git+https://github.com/lukuid/sdk.git?rev=de0e61f0455cb38bb1127db4043c2612f3a784f9#de0e61f0455cb38bb1127db4043c2612f3a784f9"
 dependencies = [
  "async-trait",
  "base64",

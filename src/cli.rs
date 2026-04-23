@@ -38,6 +38,9 @@ pub enum Commands {
         /// Skip certificate time-bound checks.
         #[arg(long)]
         skip_certificate_temporal_checks: bool,
+        /// Fail if any batch of records were separated because of a gap, defined by policy in manifest of .luku file (if set).
+        #[arg(long)]
+        require_continuity: bool,
         /// Trusted root fingerprints for external identity verification.
         #[arg(long)]
         trusted_external_fingerprint: Vec<String>,
