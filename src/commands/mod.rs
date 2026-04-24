@@ -4,3 +4,4 @@ pub mod inspect;
 pub mod export;
 pub mod device;
 pub mod open;
+pub mod test;

@@ -12,7 +12,17 @@ pub fn run_verify(
     require_continuity: bool,
     trusted_external_fingerprints: Vec<String>,
     json_mode: bool,
+    run_test: bool,
 ) -> Result<i32> {
+    let mut self_test_results = None;
+    if run_test {
+        if !json_mode {
+            let _ = super::test::run_test(false);
+            println!();
+        }
+        self_test_results = Some(lukuid_sdk::LukuidSdk::self_test());
+    }
+
     let luku = LukuFile::open(path).map_err(|e| anyhow!("{e}"))?;
     let options = LukuVerifyOptions {
         allow_untrusted_roots,
@@ -22,7 +32,13 @@ pub fn run_verify(
         ..Default::default()
     };
     let issues = luku.verify(options.clone());
-    let output = verification_output(&luku, path, &issues, &options.trust_profile);
+    let mut output = verification_output(&luku, path, &issues, &options.trust_profile);
+    
+    if let Some(st_results) = self_test_results {
+        if let Value::Object(ref mut map) = output {
+            map.insert("self_test".to_string(), json!(st_results));
+        }
+    }
     
     crate::output::print_output(&output, json_mode)?;
     

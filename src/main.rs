@@ -25,6 +25,7 @@ fn main() {
             require_continuity,
             trusted_external_fingerprint,
             json,
+            test,
         } => {
             commands::verify::run_verify(
                 &path,
@@ -33,7 +34,11 @@ fn main() {
                 require_continuity,
                 trusted_external_fingerprint,
                 json,
+                test,
             )
+        }
+        Commands::Test { json } => {
+            commands::test::run_test(json)
         }
         Commands::Browse {
             path,

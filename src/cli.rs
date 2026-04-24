@@ -47,6 +47,15 @@ pub enum Commands {
         /// Emit machine-readable JSON.
         #[arg(long)]
         json: bool,
+        /// Run the SDK self-test to verify the local cryptographic environment before verifying.
+        #[arg(long)]
+        test: bool,
+    },
+    /// Run the SDK self-test to verify the local cryptographic environment (KAT/NIST checks).
+    Test {
+        /// Emit machine-readable JSON.
+        #[arg(long)]
+        json: bool,
     },
     /// Browse archive contents by block and record.
     Browse {
