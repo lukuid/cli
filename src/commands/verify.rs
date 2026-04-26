@@ -31,7 +31,7 @@ pub fn run_verify(
         trusted_external_fingerprints,
         ..Default::default()
     };
-    let issues = luku.verify(options.clone());
+    let issues = luku.verifyFile(options.clone());
     let mut output = verification_output(&luku, path, &issues, &options.trust_profile);
     
     if let Some(st_results) = self_test_results {
