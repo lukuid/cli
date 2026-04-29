@@ -7,6 +7,8 @@ license = "Apache-2.0"
 repository = "https://github.com/lukuid/cli"
 homepage = "https://github.com/lukuid/cli"
 readme = "README.md"
+keywords = ["animal-id", "bluetooth", "lukuid", "forensic", "dotluku"]
+categories = ["hardware-support", "api-bindings"]
 
 [dependencies]
 anyhow = "1.0"
