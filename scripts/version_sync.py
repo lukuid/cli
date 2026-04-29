@@ -13,7 +13,7 @@ CARGO_FILE = ROOT / "Cargo.toml"
 SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$")
 PACKAGE_VERSION_RE = re.compile(r'(?m)^version = "[^"]+"$')
 SDK_DEP_RE = re.compile(
-    r'lukuid-sdk = \{ git = "https://github\.com/lukuid/sdk\.git", version = "[^"]+", default-features = false \}'
+    r'lukuid-sdk = \{ git = "https://github\.com/lukuid/sdk\.git",(?: rev = "[0-9a-f]+",)? version = "[^"]+", default-features = false \}'
 )
 
 
