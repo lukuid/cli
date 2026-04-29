@@ -400,6 +400,7 @@ pub (crate) mod tests {
                 created_at_utc: 1770825000,
                 description: "CLI fixture".to_string(),
                 blocks_hash: "abc123".to_string(),
+                native_continuity_gap_seconds: None,
                 extra: HashMap::new(),
             },
             "manifest-signature".to_string(),
