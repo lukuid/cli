@@ -1208,7 +1208,7 @@ checksum = "5e5032e24019045c762d3c0f28f5b6b8bbf38563a65908389bf7978758920897"
 
 [[package]]
 name = "lukuid-cli"
-version = "1.0.6"
+version = "1.0.7"
 dependencies = [
  "anyhow",
  "clap",
@@ -1222,8 +1222,8 @@ dependencies = [
 
 [[package]]
 name = "lukuid-sdk"
-version = "1.0.9"
-source = "git+https://github.com/lukuid/sdk.git?rev=ad22e9b189e8010616878807b5a501eea0a8e09e#ad22e9b189e8010616878807b5a501eea0a8e09e"
+version = "1.0.10"
+source = "git+https://github.com/lukuid/sdk.git?rev=ef68f37bf71caa49bec16e76ac3ee2a8410c7194#ef68f37bf71caa49bec16e76ac3ee2a8410c7194"
 dependencies = [
  "async-trait",
  "base64",
