@@ -285,7 +285,9 @@ jobs:
     environment: release
     steps:
       - name: Submit WinGet PR
-        if: ${{ secrets.WINGET_TOKEN != '' }}
+        env:
+          WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
+        if: ${{ env.WINGET_TOKEN != '' }}
         uses: vedantmgoyal2009/winget-releaser@v2
         with:
           identifier: LukuID.CLI
