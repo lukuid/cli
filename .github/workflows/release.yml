@@ -113,7 +113,7 @@ jobs:
           set -euo pipefail
           TAG="v${{ needs.meta.outputs.version }}"
           gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "$TAG" --notes "CLI release $TAG"
-          find release-assets -type f -print0 | xargs -0 gh release upload "$TAG" --clobber
+          find release-assets -type f \( -name "*.tar.gz" -o -name "*.zip" -o -name "*.sha256" \) -print0 | xargs -0 gh release upload "$TAG" --clobber
 
   publish-crate:
     runs-on: ubuntu-latest
