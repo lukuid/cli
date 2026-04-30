@@ -1,6 +1,6 @@
 [package]
 name = "lukuid-cli"
-version = "1.0.5"
+version = "1.0.6"
 edition = "2021"
 description = "Rust CLI for opening, verifying, and browsing .luku evidence packages"
 license = "Apache-2.0"
@@ -15,7 +15,7 @@ anyhow = "1.0"
 clap = { version = "4.5", features = ["derive"] }
 console = "0.16.3"
 dialoguer = "0.12.0"
-lukuid-sdk = { git = "https://github.com/lukuid/sdk.git", rev = "fc511ace5993a425a8ab83e6db6ddb73dc14ce20", version = "1.0.8", default-features = false }
+lukuid-sdk = { git = "https://github.com/lukuid/sdk.git", rev = "ad22e9b189e8010616878807b5a501eea0a8e09e", version = "1.0.9", default-features = false }
 open = "5.3.4"
 serde_json = "1.0"
 tempfile = "3.27.0"
