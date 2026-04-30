@@ -6,13 +6,8 @@ class LukuidCli < Formula
   version "__VERSION__"
 
   on_macos do
-    if Hardware::CPU.arm?
-      url "https://github.com/lukuid/cli/releases/download/v__VERSION__/lukuid-cli-__VERSION__-aarch64-apple-darwin.tar.gz"
-      sha256 "__MACOS_ARM64_SHA__"
-    else
-      url "https://github.com/lukuid/cli/releases/download/v__VERSION__/lukuid-cli-__VERSION__-x86_64-apple-darwin.tar.gz"
-      sha256 "__MACOS_X64_SHA__"
-    end
+    url "https://github.com/lukuid/cli/releases/download/v__VERSION__/lukuid-cli-__VERSION__-aarch64-apple-darwin.tar.gz"
+    sha256 "__MACOS_ARM64_SHA__"
   end
 
   def install

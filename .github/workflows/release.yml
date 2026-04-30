@@ -51,9 +51,6 @@ jobs:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             archive: tar.gz
-          - os: macos-13
-            target: x86_64-apple-darwin
-            archive: tar.gz
           - os: macos-latest
             target: aarch64-apple-darwin
             archive: tar.gz
@@ -156,7 +153,6 @@ jobs:
           set -euo pipefail
           export VERSION="${{ needs.meta.outputs.version }}"
           export ARM_SHA="$(cut -d' ' -f1 release-assets/cli-aarch64-apple-darwin/lukuid-cli-${VERSION}-aarch64-apple-darwin.tar.gz.sha256)"
-          export X64_SHA="$(cut -d' ' -f1 release-assets/cli-x86_64-apple-darwin/lukuid-cli-${VERSION}-x86_64-apple-darwin.tar.gz.sha256)"
           python3 - <<'PY'
           from pathlib import Path
           import os
@@ -166,7 +162,6 @@ jobs:
               template
               .replace("__VERSION__", os.environ["VERSION"])
               .replace("__MACOS_ARM64_SHA__", os.environ["ARM_SHA"])
-              .replace("__MACOS_X64_SHA__", os.environ["X64_SHA"])
           )
           Path("lukuid-cli.rb").write_text(rendered, encoding="utf-8")
           PY
