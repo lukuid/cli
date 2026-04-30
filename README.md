@@ -4,7 +4,10 @@
 [![CLI Release](https://github.com/lukuid/cli/actions/workflows/release.yml/badge.svg)](https://github.com/lukuid/cli/actions/workflows/release.yml)
 [![CLI Launchpad](https://github.com/lukuid/cli/actions/workflows/launchpad.yml/badge.svg)](https://github.com/lukuid/cli/actions/workflows/launchpad.yml)
 [![crates.io](https://img.shields.io/crates/v/lukuid-cli?style=flat-square&logo=rust)](https://crates.io/crates/lukuid-cli)
-[![Homebrew](https://img.shields.io/badge/Homebrew-lukuid--cli-orange?style=flat-square)](https://github.com/lukuid/cli/releases)
+[![Homebrew](https://img.shields.io/badge/Homebrew-lukuid--cli-orange?style=flat-square&logo=homebrew)](https://github.com/lukuid/homebrew-tap)
+[![Chocolatey](https://img.shields.io/chocolatey/v/lukuid-cli?style=flat-square&logo=chocolatey)](https://community.chocolatey.org/packages/lukuid-cli)
+[![WinGet](https://img.shields.io/badge/WinGet-LukuID.CLI-blue?style=flat-square&logo=windows)](https://github.com/microsoft/winget-pkgs)
+[![Scoop](https://img.shields.io/badge/Scoop-lukuid--cli-red?style=flat-square)](https://github.com/lukuid/cli)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache%202.0-blue?style=flat-square)](LICENSE)
 
 Rust command-line interface for opening, verifying, and browsing `.luku` forensic evidence packages using the shared `lukuid-sdk`.
