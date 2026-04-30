@@ -95,28 +95,6 @@ jobs:
           name: cli-${{ matrix.target }}
           path: dist/*
 
-  publish-crate:
-    runs-on: ubuntu-latest
-    needs: [meta, build]
-    environment: release
-    permissions:
-      id-token: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: |
-            . -> target
-      - run: python3 scripts/version_sync.py check
-      - name: Authenticate crates.io Trusted Publishing
-        if: vars.CRATES_IO_TRUSTED_PUBLISHING == 'true'
-        id: auth
-        uses: rust-lang/crates-io-auth-action@v1
-      - run: cargo publish --locked
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token != '' && steps.auth.outputs.token || secrets.CARGO_REGISTRY_TOKEN }}
-
   github-release:
     runs-on: ubuntu-latest
     needs: [meta, build]
@@ -135,6 +113,27 @@ jobs:
           TAG="v${{ needs.meta.outputs.version }}"
           gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "$TAG" --notes "CLI release $TAG"
           find release-assets -type f -print0 | xargs -0 gh release upload "$TAG" --clobber
+
+  publish-crate:
+    runs-on: ubuntu-latest
+    needs: [meta, build, github-release]
+    environment: release
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            . -> target
+      - run: python3 scripts/version_sync.py check
+      - name: Authenticate crates.io Trusted Publishing
+        id: auth
+        uses: rust-lang/crates-io-auth-action@v1
+      - run: cargo publish --locked
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
 
   homebrew:
     runs-on: ubuntu-latest
@@ -191,3 +190,105 @@ jobs:
           git -C tap diff --cached --quiet && exit 0
           git -C tap commit -m "Update lukuid-cli to v${{ needs.meta.outputs.version }}"
           git -C tap push
+
+  chocolatey:
+    runs-on: windows-latest
+    needs: [meta, build, github-release]
+    environment: release
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+      - name: Render Chocolatey Files
+        shell: pwsh
+        run: |
+          $Version = "${{ needs.meta.outputs.version }}"
+          $ZipName = "lukuid-cli-$Version-x86_64-pc-windows-msvc.zip"
+          $ChecksumPath = "release-assets\cli-x86_64-pc-windows-msvc\$ZipName.sha256"
+          $Checksum = (Get-Content $ChecksumPath).Substring(0, 64)
+          $Url = "https://github.com/lukuid/cli/releases/download/v$Version/$ZipName"
+          
+          $Nuspec = Get-Content "choco\lukuid-cli.nuspec" -Raw
+          $Nuspec = $Nuspec -replace '__VERSION__', $Version
+          Set-Content "choco\lukuid-cli.nuspec" $Nuspec
+          
+          $InstallScript = Get-Content "choco\tools\chocolateyInstall.ps1" -Raw
+          $InstallScript = $InstallScript -replace '__URL__', $Url
+          $InstallScript = $InstallScript -replace '__CHECKSUM__', $Checksum
+          Set-Content "choco\tools\chocolateyInstall.ps1" $InstallScript
+      - name: Pack and Push
+        env:
+          CHOCO_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
+        shell: pwsh
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:CHOCO_API_KEY)) {
+            Write-Host "CHOCOLATEY_API_KEY is not set. Skipping publish."
+            exit 0
+          }
+          cd choco
+          choco pack
+          choco apiKey -k "$env:CHOCO_API_KEY" -source https://push.chocolatey.org/
+          choco push lukuid-cli.${{ needs.meta.outputs.version }}.nupkg -s https://push.chocolatey.org/
+
+  scoop:
+    runs-on: ubuntu-latest
+    needs: [meta, build, github-release]
+    environment: release
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+      - name: Render Scoop Manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          export VERSION="${{ needs.meta.outputs.version }}"
+          export ZIP_NAME="lukuid-cli-${VERSION}-x86_64-pc-windows-msvc.zip"
+          export CHECKSUM="$(cut -d' ' -f1 release-assets/cli-x86_64-pc-windows-msvc/${ZIP_NAME}.sha256)"
+          
+          cat scripts/scoop-manifest.json \
+            | sed "s/__VERSION__/${VERSION}/g" \
+            | sed "s/__CHECKSUM__/${CHECKSUM}/g" \
+            > lukuid-cli.json
+      - name: Upload Scoop Asset
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: gh release upload "v${{ needs.meta.outputs.version }}" lukuid-cli.json --clobber
+      - name: Publish Scoop Bucket
+        if: vars.SCOOP_BUCKET_REPOSITORY != ''
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.SCOOP_BUCKET_REPOSITORY }}
+          path: bucket
+          token: ${{ secrets.SCOOP_BUCKET_TOKEN }}
+      - name: Update Scoop Manifest
+        if: vars.SCOOP_BUCKET_REPOSITORY != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p bucket/bucket
+          cp lukuid-cli.json bucket/bucket/lukuid-cli.json
+          git -C bucket config user.name "github-actions[bot]"
+          git -C bucket config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C bucket add bucket/lukuid-cli.json
+          git -C bucket diff --cached --quiet && exit 0
+          git -C bucket commit -m "Update lukuid-cli to v${{ needs.meta.outputs.version }}"
+          git -C bucket push
+
+  winget:
+    runs-on: windows-latest
+    needs: [meta, build, github-release]
+    environment: release
+    steps:
+      - name: Submit WinGet PR
+        if: secrets.WINGET_TOKEN != ''
+        uses: vedantmgoyal2009/winget-releaser@v2
+        with:
+          identifier: LukuID.CLI
+          version: ${{ needs.meta.outputs.version }}
+          installers-regex: '\.zip$'
+          token: ${{ secrets.WINGET_TOKEN }}

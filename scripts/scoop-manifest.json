@@ -1,0 +1,21 @@
+{
+  "version": "__VERSION__",
+  "description": "Inspect and verify .luku forensic evidence packages",
+  "homepage": "https://github.com/lukuid/cli",
+  "license": "Apache-2.0",
+  "architecture": {
+    "64bit": {
+      "url": "https://github.com/lukuid/cli/releases/download/v__VERSION__/lukuid-cli-__VERSION__-x86_64-pc-windows-msvc.zip",
+      "hash": "__CHECKSUM__"
+    }
+  },
+  "bin": "lukuid-cli.exe",
+  "checkver": "github",
+  "autoupdate": {
+    "architecture": {
+      "64bit": {
+        "url": "https://github.com/lukuid/cli/releases/download/v$version/lukuid-cli-$version-x86_64-pc-windows-msvc.zip"
+      }
+    }
+  }
+}

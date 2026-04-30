@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>lukuid-cli</id>
+    <version>__VERSION__</version>
+    <title>LukuID CLI</title>
+    <authors>LukuID Contributors</authors>
+    <projectUrl>https://github.com/lukuid/cli</projectUrl>
+    <tags>lukuid forensic evidence cli rust</tags>
+    <summary>Inspect and verify .luku forensic evidence packages</summary>
+    <description>Rust command-line interface for opening, verifying, and browsing .luku forensic evidence packages using the shared lukuid-sdk.</description>
+    <licenseUrl>https://github.com/lukuid/cli/blob/main/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+    <file src="..\LICENSE" target="tools\LICENSE" />
+  </files>
+</package>
