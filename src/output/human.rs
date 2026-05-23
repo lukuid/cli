@@ -24,12 +24,12 @@ pub fn join_or_dash(values: Vec<String>) -> String {
 
 pub fn primary_record_id(record: &Value) -> String {
     const CANDIDATES: [&str; 7] = [
-        "scan_id",
-        "event_id",
-        "custody_id",
+        "id",
+        "id",
+        "id",
         "parent_record_id",
-        "attachment_id",
-        "location_id",
+        "id",
+        "id",
         "id",
     ];
 
@@ -71,7 +71,7 @@ mod tests {
     fn primary_record_id_prefers_explicit_identifier_fields() {
         let record = json!({
             "type": "scan",
-            "scan_id": "SCAN-123",
+            "id": "SCAN-123",
             "payload": {
                 "id": "fallback-id"
             }
@@ -84,7 +84,7 @@ mod tests {
     fn primary_record_id_supports_custody_records() {
         let record = json!({
             "type": "custody",
-            "custody_id": "CUST-123",
+            "id": "CUST-123",
             "payload": {
                 "event": "handoff",
                 "status": "received"

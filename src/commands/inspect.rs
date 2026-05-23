@@ -423,7 +423,7 @@ pub (crate) mod tests {
                 batch: vec![
                     json!({
                         "type": "scan",
-                        "scan_id": "SCAN-1",
+                        "id": "SCAN-1",
                         "signature": "scan-signature",
                         "previous_signature": "genesis",
                         "payload": {
