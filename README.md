@@ -314,7 +314,10 @@ When you want to cut a new CLI release:
 
 1. Update the canonical semver and sync the Cargo.toml manifest:
    `python3 scripts/version_sync.py apply 1.0.8`
-2. Verify that the managed package version matches:
+2. Ensure the `lukuid-sdk` dependency in `Cargo.toml` points to the remote GitHub repository and the intended release commit/version (not a local path).
+3. Update the Rust lockfile to match the new version:
+   `cargo check`
+4. Verify that the managed package version matches:
    `python3 scripts/version_sync.py check`
 3. Review the resulting manifest changes and commit them normally.
 4. Create the release tag as `v1.0.8` after the release commit is on `main`.
