@@ -2,309 +2,118 @@
 
 [![CLI CI](https://github.com/lukuid/cli/actions/workflows/ci.yml/badge.svg)](https://github.com/lukuid/cli/actions/workflows/ci.yml)
 [![CLI Release](https://github.com/lukuid/cli/actions/workflows/release.yml/badge.svg)](https://github.com/lukuid/cli/actions/workflows/release.yml)
-[![CLI Launchpad](https://github.com/lukuid/cli/actions/workflows/launchpad.yml/badge.svg)](https://github.com/lukuid/cli/actions/workflows/launchpad.yml)
 [![crates.io](https://img.shields.io/crates/v/lukuid-cli?style=flat-square&logo=rust)](https://crates.io/crates/lukuid-cli)
 [![Homebrew](https://img.shields.io/badge/Homebrew-lukuid--cli-orange?style=flat-square&logo=homebrew)](https://github.com/lukuid/homebrew-tap)
-[![Chocolatey](https://img.shields.io/chocolatey/v/lukuid-cli?style=flat-square&logo=chocolatey)](https://community.chocolatey.org/packages/lukuid-cli)
-[![WinGet](https://img.shields.io/badge/WinGet-LukuID.CLI-blue?style=flat-square&logo=windows)](https://github.com/microsoft/winget-pkgs)
-[![Scoop](https://img.shields.io/badge/Scoop-lukuid--cli-red?style=flat-square)](https://github.com/lukuid/cli)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache%202.0-blue?style=flat-square)](LICENSE)
 
-Rust command-line interface for opening, verifying, and browsing `.luku` forensic evidence packages using the shared `lukuid-sdk`.
+A lightweight, blazing-fast Rust command-line tool to open, verify, and interactively browse `.luku` forensic evidence packages. Backed by the shared LukuID Cryptographic SDK, this tool brings secure offline verification straight to your terminal.
 
-> License: This repository is licensed under Apache License 2.0 (`SPDX: Apache-2.0`). See [LICENSE](LICENSE).
+---
 
-## Use Cases
+## Key Capabilities
 
-This CLI is intended for:
+*   🛡️ **Offline Verification**: Perform rigorous cryptographic birth and chain checks on `.luku` files without a network connection.
+*   🖥️ **Interactive Terminal UI (TUI)**: Drill down through block structures, view record histories, and extract attachments directly.
+*   🤖 **CI/CD Ready**: Machine-readable JSON output and standard exit codes make it ideal for automated pipeline validation.
+*   ⚡ **Zero-Config Install**: Standalone binaries available for macOS, Linux, and Windows.
 
-- Auditors who need to inspect a `.luku` archive offline without opening the desktop app.
-- Developers who need a fast way to validate `.luku` exports while working on the SDK, firmware, or exporter flows.
-- CI and automation jobs that need a machine-readable verification result and a non-zero exit code on critical failures.
-- Support and forensic workflows that need to inspect blocks, records, attachment hashes, and verification issues from a terminal session.
+---
 
-## Build And Run
+## Installation
 
-By default, the CLI builds against the public `lukuid-sdk` source repository on GitHub, so a standalone checkout works without a sibling SDK repository.
-
-From this directory:
-
+### macOS (Homebrew)
+Add the official tap and install the CLI:
 ```bash
-cargo build
+brew tap lukuid/tap
+brew install lukuid-cli
 ```
 
-If you want to test local SDK changes without editing `Cargo.toml`, create `cli/.cargo/config.toml` with a source patch that points at your local SDK checkout:
-
-```toml
-[patch."https://github.com/lukuid/sdk.git"]
-lukuid-sdk = { path = "../../sdk/src/rust/lukuid-sdk" }
-```
-
-This preserves the old fast local-development workflow when `cli/` and `sdk/` are checked out side-by-side. An example file is included at `.cargo/config.toml.example`.
-
-Remove `cli/.cargo/config.toml` to switch back to the public SDK repository dependency.
-
-Release build:
-
+### Via Cargo (Rust Users)
+If you have Rust and Cargo installed, compile the latest release directly from crates.io:
 ```bash
-cargo build --release
+cargo install lukuid-cli
 ```
 
-Direct execution during development:
+### Pre-compiled Binaries
+You can also download standalone binaries for your platform directly from the [GitHub Releases](https://github.com/lukuid/cli/releases) page.
 
+---
+
+## 3-Minute Quick Start
+
+### 1. Verify an Archive (Cryptographic Integrity)
+Run the LukuID verification pipeline on any `.luku` package:
 ```bash
-cargo run -- <command> [options]
+lukuid-cli verify path/to/evidence.luku
 ```
+_Exits with `0` on success, `2` on critical cryptographic or structural issues, and `1` on read errors._
 
-Show the top-level help:
-
+### 2. Quick Summary (`info`)
+Output metadata, devices, record counts, and block chains:
 ```bash
-cargo run -- --help
+lukuid-cli info path/to/evidence.luku
 ```
-
-Show help for a specific command:
-
-```bash
-cargo run -- info --help
-cargo run -- open --help
-cargo run -- verify --help
-cargo run -- browse --help
-```
-
-## Commands
-
-The CLI currently exposes these user-facing archive commands:
-
-- `info`: open a `.luku` archive and print a high-level summary.
-- `open`: open an interactive terminal UI for browsing records and attachments.
-- `verify`: run the SDK verification pipeline and report issues.
-- `browse`: inspect the archive structure by block and record.
-
-### Info
-
-Purpose:
-
-- Confirm the archive opens successfully.
-- Review manifest metadata quickly.
-- See record counts, block counts, device IDs, attachment hashes, and record-type distribution.
-
-Command:
-
-```bash
-cargo run -- info path/to/evidence.luku
-```
-
-Options:
-
-- `--json`: Emit machine-readable JSON.
-
-Human-readable output:
-
-- Archive path
-- Expected mimetype
-- Manifest type, version, timestamp, and description
-- Block count, total record count, and attachment count
-- Device IDs found in the archive
-- Record-type counts
-- Attachment hashes, if present
-- Per-block summary lines showing `block_id`, `added_by`, `device_id`, record count, and record types
-
-Example output shape:
-
 ```text
 Archive: path/to/evidence.luku
-Mimetype: application/vnd.lukuid.package+zip
-Manifest: type=LukuArchive version=1.0 created_at_utc=1770825000
-Description: Exported 12 records
+Manifest: type=LukuArchive version=1.0.0 created_at_utc=1770825000
 Blocks: 2 | Records: 12 | Attachments: 1
 Devices: LUK-1005-EU
 Record types: attachment=1, scan=11
-Attachment hashes:
-  - a1b2c3...
 Blocks:
   - [0] added_by=LUK-1005-EU device_id=LUK-1005-EU records=10 types=scan=10
   - [1] added_by=Vet-Mobile-App device_id=LUK-1005-EU records=2 types=attachment=1, scan=1
 ```
 
-JSON output:
-
+### 3. Open the Interactive Terminal Browser (`open`)
+Launch the full terminal user interface to browse records and extract files on-the-fly:
 ```bash
-cargo run -- info path/to/evidence.luku --json
+lukuid-cli open path/to/evidence.luku
 ```
 
-- Emits a single JSON object.
-- Includes manifest metadata, counts, device list, record-type aggregates, attachment hashes, block summaries, and a `text` field containing the human-readable rendering.
+---
 
-### Open
+## Command Reference
 
-Purpose:
+The LukuID CLI provides four core commands:
 
-- Browse records interactively in the terminal.
-- Open extracted attachments in the host system's default viewer.
-- Inspect a `.luku` archive without manually drilling through JSON output.
+| Command | Purpose | Common Options |
+| :--- | :--- | :--- |
+| **`verify`** | Run full cryptographic audit pipeline | `--json`, `--allow-untrusted-roots`, `--require-continuity` |
+| **`info`** | Print high-level overview of the archive | `--json` |
+| **`open`** | Open interactive terminal browser (TUI) | _None_ |
+| **`browse`** | Inspect JSON layout of specific blocks/records | `--block <idx>`, `--record <idx>`, `--show-payload` |
 
-Command:
-
+### Advanced Verification Options
+To skip certificate temporal constraints (for testing old fixtures) or to trust custom external root certificates:
 ```bash
-cargo run -- open path/to/evidence.luku
+# Verify using development certificates
+LUKUID_TRUST_PROFILE=dev lukuid-cli verify evidence.luku
+
+# Add a trusted root certificate fingerprint manually
+lukuid-cli verify evidence.luku --trusted-external-fingerprint <SHA256_FINGERPRINT>
 ```
 
-### Verify
+---
 
-Purpose:
+## Development Guide
 
-- Run the Rust SDK verification logic against a `.luku` archive.
-- Detect critical evidence failures such as broken block linkage, record-chain breaks, signature failures, attachment corruption, or hash mismatches.
-- Produce a CI-safe exit code.
-
-Command:
-
+### Build from Source
+First, clone this repository, then run the compilation steps:
 ```bash
-cargo run -- verify path/to/evidence.luku
+cargo build --release
 ```
+Your compiled binary will be located at `target/release/lukuid-cli`.
 
-Verbose verifier trace:
+### Sibling-SDK Development Setup
+By default, the CLI compiles against the public `lukuid-sdk` repository on GitHub. If you are developing local SDK changes side-by-side with the CLI, create `.cargo/config.toml` inside this directory to patch the source:
 
-```bash
-LUKUID_SDK_DEBUG=1 cargo run -- verify path/to/evidence.luku
+```toml
+[patch."https://github.com/lukuid/sdk.git"]
+lukuid-sdk = { path = "../sdk/src/rust/lukuid-sdk" }
 ```
+An example template is available at `.cargo/config.toml.example`. Remove this file to fall back to the public repository dependency.
 
-Overriding trust profile (for development certificates):
-
-```bash
-LUKUID_TRUST_PROFILE=dev cargo run -- verify path/to/evidence.luku
-```
-
-Options:
-
-- `--allow-untrusted-roots`: Allow records without trusted roots. Useful for local test exports or incomplete chains.
-- `--skip-certificate-temporal-checks`: Skip certificate time-bound checks. Useful when testing fixtures that do not have realistic issuance windows.
-- `--require-continuity`: Fail if any batch of records were separated because of a gap, defined by policy in manifest of .luku file (if set).
-- `--trusted-external-fingerprint <FINGERPRINT>`: Trusted root fingerprints for external identity verification. Can be provided multiple times.
-- `--json`: Emit machine-readable JSON.
-
-- Emits SDK verifier diagnostics to `stderr` with per-block and per-record context.
-- Useful when a failing archive produces repeated issue codes and you need to see which record index, counter, timestamp, or attestation step caused each failure.
-
-Human-readable output:
-
-- Archive path
-- Verification status:
-  - `verified`
-  - `verified_with_warnings`
-  - `invalid`
-- Counts of `critical`, `warning`, and `info` issues
-- A list of verification issues, if any
-
-Example output shape:
-
-```text
-Archive: path/to/evidence.luku
-Verification status: verified_with_warnings (critical=0 warning=1 info=0)
-Blocks: 2 | Records: 12 | Attachments: 1
-Issues:
-  - [warning] ATTESTATION_CHAIN_MISSING: Missing DAC attestation chain for device LUK-1005-EU.
-```
-
-JSON output:
-
-```bash
-cargo run -- verify path/to/evidence.luku --json
-```
-
-- Emits a JSON object containing:
-  - `status`
-  - `counts`
-  - `issues`
-  - `text`
-
-Exit codes:
-
-- `0`: archive opened and no critical verification issues were found.
-- `2`: archive opened, verification ran, and at least one critical issue was found.
-- `1`: command usage error, open failure, or unexpected runtime error.
-
-### Browse
-
-Purpose:
-
-- Inspect archive structure incrementally.
-- Browse by block first, then drill into a specific record.
-- Review individual record JSON in a terminal without opening the full desktop viewer.
-
-Command:
-
-```bash
-cargo run -- browse path/to/evidence.luku
-```
-
-Options:
-
-- `--block <INDEX>`: Select a block by zero-based block index.
-- `--record <INDEX>`: Select a record by zero-based index within the chosen block (requires `--block`).
-- `--show-payload`: Include full payloads and nested objects in record detail output.
-- `--json`: Emit machine-readable JSON.
-
-### Examples
-
-List all blocks:
-
-```bash
-cargo run -- browse path/to/evidence.luku
-```
-
-Human-readable output:
-
-- Archive path
-- One summary line per block with:
-  - block index
-  - `timestamp_utc`
-  - `added_by`
-  - `device_id`
-  - record count
-  - attachment count
-
-Inspect a specific block:
-
-```bash
-cargo run -- browse path/to/evidence.luku --block 0
-```
-
-Human-readable output:
-
-- Block metadata
-- One summary line per record in that block with:
-  - record index
-  - `type`
-  - best-effort primary ID
-  - `ctr`
-  - `timestamp_utc`
-  - shortened `signature`
-
-Inspect a specific record:
-
-```bash
-cargo run -- browse path/to/evidence.luku --block 0 --record 2 --show-payload
-```
-
-JSON output:
-
-```bash
-cargo run -- browse path/to/evidence.luku --json
-cargo run -- browse path/to/evidence.luku --block 0 --json
-cargo run -- browse path/to/evidence.luku --block 0 --record 2 --json
-```
-
-- Archive-level browse returns block summaries.
-- Block-level browse returns the selected block plus record summaries.
-- Record-level browse returns the selected block summary and the selected record.
-
-## Notes
-
-- The CLI expects the `.luku` archive `mimetype` entry to be `application/vnd.lukuid.package+zip`.
-- `verify` exits `2` when critical verification issues are detected, which makes it suitable for CI and scripted evidence checks.
-- The CLI reads `.luku` archives through the shared Rust SDK. If `.luku` verification logic changes in the SDK, this CLI inherits that behavior.
-- The documented `open`, `verify`, and `browse` output contract is covered by CLI unit tests to reduce drift between the README and the binary behavior.
+---
 
 ## Versioning and release
 
@@ -319,8 +128,8 @@ When you want to cut a new CLI release:
    `cargo check`
 4. Verify that the managed package version matches:
    `python3 scripts/version_sync.py check`
-3. Review the resulting manifest changes and commit them normally.
-4. Create the release tag as `v1.0.8` after the release commit is on `main`.
+5. Review the resulting manifest changes and commit them normally.
+6. Create the release tag as `v1.0.8` after the release commit is on `main`.
 
 The release workflows do not publish on every merge. They only publish when all of the following are true:
 
@@ -331,4 +140,3 @@ The release workflows do not publish on every merge. They only publish when all 
 This means a normal merge without a version bump is safe: CI can still test and build the CLI, but no package will be published.
 
 If you merge release-relevant changes without bumping the version, the repository simply remains ahead of the last published CLI release until you later update `VERSION`, run the sync script, commit the versioned manifest, and tag that commit. Reusing an already-published version number is not safe, because registry publishes are immutable and the publish jobs will fail once they try to push an existing version.
-
