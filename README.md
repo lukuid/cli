@@ -305,3 +305,27 @@ cargo run -- browse path/to/evidence.luku --block 0 --record 2 --json
 - `verify` exits `2` when critical verification issues are detected, which makes it suitable for CI and scripted evidence checks.
 - The CLI reads `.luku` archives through the shared Rust SDK. If `.luku` verification logic changes in the SDK, this CLI inherits that behavior.
 - The documented `open`, `verify`, and `browse` output contract is covered by CLI unit tests to reduce drift between the README and the binary behavior.
+
+## Versioning and release
+
+The LukuID CLI release version is governed by a single source of truth: [`VERSION`](VERSION).
+
+When you want to cut a new CLI release:
+
+1. Update the canonical semver and sync the Cargo.toml manifest:
+   `python3 scripts/version_sync.py apply 1.0.8`
+2. Verify that the managed package version matches:
+   `python3 scripts/version_sync.py check`
+3. Review the resulting manifest changes and commit them normally.
+4. Create the release tag as `v1.0.8` after the release commit is on `main`.
+
+The release workflows do not publish on every merge. They only publish when all of the following are true:
+
+- the ref is a semver tag in the form `vX.Y.Z`
+- the tag version matches `VERSION`
+- the tagged commit is reachable from `main`
+
+This means a normal merge without a version bump is safe: CI can still test and build the CLI, but no package will be published.
+
+If you merge release-relevant changes without bumping the version, the repository simply remains ahead of the last published CLI release until you later update `VERSION`, run the sync script, commit the versioned manifest, and tag that commit. Reusing an already-published version number is not safe, because registry publishes are immutable and the publish jobs will fail once they try to push an existing version.
+
