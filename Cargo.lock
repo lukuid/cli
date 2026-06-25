@@ -1514,7 +1514,7 @@ dependencies = [
 
 [[package]]
 name = "lukuid-cli"
-version = "1.0.19"
+version = "1.0.20"
 dependencies = [
  "anyhow",
  "clap",
@@ -1528,8 +1528,8 @@ dependencies = [
 
 [[package]]
 name = "lukuid-sdk"
-version = "1.0.19"
-source = "git+https://github.com/lukuid/sdk.git?rev=15eb8943438da6e3a1976a8630f91582fec95812#15eb8943438da6e3a1976a8630f91582fec95812"
+version = "1.0.20"
+source = "git+https://github.com/lukuid/sdk.git?rev=d984d39d08a8fb4d292d7ed022a3a1e533976996#d984d39d08a8fb4d292d7ed022a3a1e533976996"
 dependencies = [
  "async-trait",
  "base64",
