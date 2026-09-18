@@ -411,6 +411,7 @@ pub (crate) mod tests {
                 device: LukuDeviceIdentity {
                     device_id: "LUK-CLI-1".to_string(),
                     public_key: "ZGVtb19wdWJsaWNfa2V5".to_string(),
+                    vendor: None,
                 },
                 attestation_dac_der: None,
                 attestation_manufacturer_der: None,
@@ -420,6 +421,8 @@ pub (crate) mod tests {
                 heartbeat_der: None,
                 heartbeat_intermediate_der: None,
                 heartbeat_root_fingerprint: None,
+                attestation_dac_signature: None,
+                heartbeat_signature: None,
                 batch: vec![
                     json!({
                         "type": "scan",
