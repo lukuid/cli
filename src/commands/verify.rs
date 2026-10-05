@@ -87,6 +87,38 @@ fn verification_output(luku: &LukuFile, path: &Path, issues: &[VerificationIssue
             .sum::<usize>(),
         luku.attachments.len()
     ));
+    let seal_failure = issues.iter().any(|issue| issue.criticality == Criticality::Critical
+        && issue.code.starts_with("ARCHIVE_") && issue.code.contains("SEAL")
+        && issue.code != "ARCHIVE_PLATFORM_SEAL_INVALID");
+    let self_seal_verified = luku.seals_raw.is_some() && !seal_failure;
+    let android_hardware_level = if issues.iter().any(|issue| issue.code == "ARCHIVE_PLATFORM_SEAL_INVALID") || seal_failure {
+        None
+    } else {
+        luku.seals_raw.as_deref()
+            .and_then(|raw| serde_json::from_str::<Value>(raw).ok())
+            .and_then(|root| root["seals"].as_array().and_then(|seals| seals.iter().find_map(|seal| {
+                if seal["type"] == "platform" && seal["platform"] == "android" && seal["alg"] == "ES256" {
+                    match seal["metadata"]["security_level"].as_str() {
+                        Some("strongbox") => Some("StrongBox-backed"),
+                        Some("tee") => Some("TEE-backed"),
+                        _ => None,
+                    }
+                } else { None }
+            })))
+    };
+    text.push_str("Archive seals:\n");
+    text.push_str(if self_seal_verified {
+        "  ✓ Post-quantum self seal (ML-DSA-65)\n"
+    } else {
+        "  ✗ Post-quantum self seal not verified\n"
+    });
+    if let Some(level) = android_hardware_level {
+        text.push_str(&format!("  ✓ Android hardware seal ({level})\n"));
+    }
+    let platform_seal_unsupported = issues.iter().any(|issue| issue.code == "ARCHIVE_PLATFORM_SEAL_UNSUPPORTED");
+    if platform_seal_unsupported {
+        text.push_str("  ? Additional platform seal unsupported by this verifier\n");
+    }
     if issues.is_empty() {
         text.push_str("No verification issues detected.\n");
     } else {
@@ -106,6 +138,11 @@ fn verification_output(luku: &LukuFile, path: &Path, issues: &[VerificationIssue
         "status": status,
         "counts": counts,
         "issues": issues,
+        "seals": {
+            "self_seal_verified": self_seal_verified,
+            "android_hardware_level": android_hardware_level,
+            "platform_seal_unsupported": platform_seal_unsupported,
+        },
         "text": text,
     })
 }
